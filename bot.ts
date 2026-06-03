@@ -11,6 +11,7 @@ import { createServer } from "node:http";
 import { createInterface } from "node:readline/promises";
 import { stdin, stdout } from "node:process";
 import { parseArgs } from "node:util";
+import telegramify from "telegramify-markdown";
 
 // Laminar tracing (OTel) — initialize once; pass getTracer() to each AI SDK call below.
 // When LMNR_BASE_URL is set, point at a local app_server (e.g. the debugger branch) on
@@ -260,14 +261,26 @@ const { values: { mode } } = parseArgs({ options: { mode: { type: "string" } } }
 
 if (mode === "telegram") {
   const bot = new Bot(process.env.TELEGRAM_TOKEN!);
+  // Render the model's markdown in Telegram. MarkdownV2 is strict (most punctuation must be
+  // escaped, and **bold**/#headers/-bullets aren't native), so convert standard markdown →
+  // Telegram-safe MarkdownV2 with telegramify-markdown. Fall back to plain text if Telegram
+  // still rejects the entities, so a reply is never dropped on a formatting error.
+  const sendMarkdown = async (chatId: number, text: string) => {
+    const body = text.slice(0, 4096);
+    try {
+      await bot.api.sendMessage(chatId, telegramify(body, "escape"), { parse_mode: "MarkdownV2" });
+    } catch {
+      await bot.api.sendMessage(chatId, body);
+    }
+  };
   bot.on("message:text", async (ctx) => {
     currentChatId = ctx.chat.id;
     history.push({ role: "user", content: ctx.message.text });
     const result = await run(history, `tg:${ctx.chat.id}`);
     history.push(...result.response.messages);
-    await ctx.reply(result.text.slice(0, 4096));
+    await sendMarkdown(ctx.chat.id, result.text);
   });
-  startScheduler((id, text) => bot.api.sendMessage(id, text));
+  startScheduler((id, text) => sendMarkdown(id, text));
   // Graceful shutdown (Fly sends SIGTERM on deploy/restart): stop polling, flush any
   // in-flight memory writes so the latest exchanges persist, then exit.
   const shutdown = async () => {
