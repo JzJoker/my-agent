@@ -1,5 +1,5 @@
 # Worker app: long-polling Telegram bot, no public HTTP service.
-app = "my-agent-mem0"
+app = "<your-app>"
 primary_region = "iad"
 
 [build]

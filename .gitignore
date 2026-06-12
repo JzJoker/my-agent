@@ -1,5 +1,6 @@
 node_modules
 .env
-memory.db
-schedules.db
+.agent-team/
+data/
 .lmnr
+fly.toml
