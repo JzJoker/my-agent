@@ -194,7 +194,7 @@ const tools = {
   ...(await getComposioTools()),
 };
 
-const model = wrapLanguageModel(aiGateway("google/gemini-2.5-flash"));
+const model = wrapLanguageModel(aiGateway("google/gemini-3.5-flash"));
 
 // An agent is bound to one delivery channel (a Telegram chat, or the CLI). The
 // channel is injected here rather than held in a module-level mutable, so runTurn
