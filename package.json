@@ -3,10 +3,10 @@
   "type": "module",
   "packageManager": "pnpm@10.25.0",
   "scripts": {
-    "dev": "tsx --env-file=.env --watch src/bot.ts --mode telegram",
-    "start": "tsx --env-file=.env src/bot.ts --mode telegram",
-    "start:prod": "tsx src/bot.ts --mode telegram",
-    "try": "tsx --env-file=.env src/bot.ts --mode cli"
+    "dev": "tsx --env-file=.env --watch src/index.ts --mode telegram",
+    "start": "tsx --env-file=.env src/index.ts --mode telegram",
+    "start:prod": "tsx src/index.ts --mode telegram",
+    "try": "tsx --env-file=.env src/index.ts --mode cli"
   },
   "dependencies": {
     "@composio/core": "^0.10.0",

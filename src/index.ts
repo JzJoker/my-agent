@@ -5,8 +5,9 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { parseArgs } from "node:util";
 import { createAgent } from "./agent";
-import { startCli } from "./channels/cli";
-import { startTelegram } from "./channels/telegram";
+import { cli } from "./channels/cli";
+import { telegram } from "./channels/telegram";
+import type { Channel } from "./channels/types";
 import { conversationsDir, DATA_DIR, memoryDir, remindersDir } from "./config";
 
 Laminar.initialize({
@@ -50,11 +51,14 @@ const {
   values: { mode },
 } = parseArgs({ options: { mode: { type: "string" } } });
 
-if (mode === "telegram") {
-  await startTelegram(createAgent);
-} else if (mode === "cli") {
-  await startCli(createAgent);
-} else {
-  console.error("Specify --mode telegram or --mode cli");
+const channels: Record<string, Channel> = {
+  [telegram.name]: telegram,
+  [cli.name]: cli,
+};
+
+const channel = mode ? channels[mode] : undefined;
+if (!channel) {
+  console.error(`Specify --mode ${Object.keys(channels).join(" or ")}`);
   process.exit(1);
 }
+await channel.start(createAgent);
