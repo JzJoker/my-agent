@@ -1,7 +1,10 @@
+import { autoChatAction, type AutoChatActionFlavor } from "@grammyjs/auto-chat-action";
 import { Laminar } from "@lmnr-ai/lmnr";
-import { Bot } from "grammy";
+import { Bot, type Context } from "grammy";
 import telegramify from "telegramify-markdown";
 import type { Channel } from "./types";
+
+type BotContext = Context & AutoChatActionFlavor;
 
 export const telegram: Channel = {
   name: "telegram",
@@ -13,7 +16,8 @@ export const telegram: Channel = {
       );
       process.exit(1);
     }
-    const bot = new Bot(process.env.TELEGRAM_TOKEN!);
+    const bot = new Bot<BotContext>(process.env.TELEGRAM_TOKEN!);
+    bot.use(autoChatAction());
     const markdownText = (text: string) =>
       telegramify(text.slice(0, 4096), "escape");
     const { runTurn, syncReminders } = createAgent(async (text) => {
@@ -23,6 +27,7 @@ export const telegram: Channel = {
     });
     bot.on("message:text", async (ctx) => {
       if (ctx.chat.id !== chatId) return; // ignore anyone who isn't the owner
+      ctx.chatAction = "typing"; // auto-refreshed until the handler returns
       await runTurn(ctx.message.text);
     });
     await syncReminders();

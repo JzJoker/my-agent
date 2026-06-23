@@ -11,6 +11,7 @@
   "dependencies": {
     "@composio/core": "^0.10.0",
     "@composio/vercel": "^0.9.2",
+    "@grammyjs/auto-chat-action": "^0.1.1",
     "@lmnr-ai/lmnr": "^0.8.29",
     "ai": "^6.0.0",
     "async-mutex": "^0.5.0",

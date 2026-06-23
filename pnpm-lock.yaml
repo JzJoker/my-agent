@@ -14,6 +14,9 @@ importers:
       '@composio/vercel':
         specifier: ^0.9.2
         version: 0.9.2(@composio/core@0.10.0(ws@8.21.0)(zod@3.25.76))(ai@6.0.193(zod@3.25.76))
+      '@grammyjs/auto-chat-action':
+        specifier: ^0.1.1
+        version: 0.1.1(grammy@1.43.0)
       '@lmnr-ai/lmnr':
         specifier: ^0.8.29
         version: 0.8.29
@@ -404,6 +407,11 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@grammyjs/auto-chat-action@0.1.1':
+    resolution: {integrity: sha512-70Jdy+keIri4452tluaZpKtHag5gD8pNczoXqajsnsx7pJC5wg3DAQ5unpt0xJb8KsVBAGWuJb298SBl3TVecg==}
+    peerDependencies:
+      grammy: ^1.0.0
 
   '@grammyjs/types@3.27.3':
     resolution: {integrity: sha512-yUKMLliGsGbnxu96YUJ7km7B0zy4PzeH/Jvti5705R/LeKDMqkDV4DckMSt+OrliWQpTwQljHE0QLol5zgxBkg==}
@@ -1673,6 +1681,10 @@ snapshots:
 
   '@esbuild/win32-x64@0.28.0':
     optional: true
+
+  '@grammyjs/auto-chat-action@0.1.1(grammy@1.43.0)':
+    dependencies:
+      grammy: 1.43.0
 
   '@grammyjs/types@3.27.3': {}
 
