@@ -1,0 +1,25 @@
+# systemd *user* service for the Harry bot — rootless, no sudo in the deploy path.
+# Installed to ~/.config/systemd/user/my-agent.service by scripts/bootstrap-remote.sh.
+# Runs at boot via `loginctl enable-linger`. Logs: journalctl --user -u my-agent -f
+#
+# Paths use %h (the user's home) and fnm's version-independent `aliases/default`
+# symlink, so this unit is generic — no hardcoded user or Node version.
+
+[Unit]
+Description=Harry — personal-assistant Telegram bot
+Documentation=https://github.com/kolbeyang/my-agent
+
+[Service]
+Type=simple
+WorkingDirectory=%h/my-agent
+# systemd injects the secrets (mirrors how Fly injects them as env vars).
+EnvironmentFile=%h/my-agent/.env
+# fnm's stable default-alias bin dir — NOT the ephemeral /run/.../fnm_multishells shim.
+Environment=PATH=%h/.local/share/fnm/aliases/default/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=%h/.local/share/fnm/aliases/default/bin/pnpm run start:prod
+Restart=always
+RestartSec=3
+SyslogIdentifier=my-agent
+
+[Install]
+WantedBy=default.target
