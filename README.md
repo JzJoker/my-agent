@@ -69,9 +69,9 @@ and delivers the result back to the chat.
 
 ## Deploying
 
-Runs as a worker on **Fly.io** (long-polls Telegram, no public port), with a separate
-Qdrant app for memory vectors. See [`CLAUDE.md`](./CLAUDE.md) for full deploy, restart,
-and debugging docs (logs, traces, Qdrant, Composio connections).
+Runs on a self-hosted Linux host as a rootless **systemd** user service (long-polls
+Telegram, no public port). See [`DEPLOY.md`](./DEPLOY.md) for the deploy workflow and
+[`CLAUDE.md`](./CLAUDE.md) for restart/debugging docs (logs, traces, Composio connections).
 
 ## More
 

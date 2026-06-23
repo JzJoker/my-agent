@@ -1,8 +1,9 @@
 # Deploying
 
 The bot runs on a Linux host as a **rootless systemd user service**. GitHub `main`
-is the source of truth; the host converges to it on every deploy. `.env` and `data/`
-live only on the host (gitignored) and are never touched by a deploy.
+is the source of truth; the host converges to it on every deploy. `.env` and the
+agent's workspace (`WORKSPACE_DIR`, which holds `memory/`) live only on the host
+(gitignored) and are never touched by a deploy.
 
 The host is referenced only by an SSH alias (default `homelab`) — the actual address
 and user live in your local `~/.ssh/config`, never in this repo:

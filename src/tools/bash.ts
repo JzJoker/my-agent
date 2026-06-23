@@ -5,7 +5,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { z } from "zod";
-import { DATA_DIR } from "../config";
+import { WORKSPACE_DIR } from "../config";
 import { MAX_OUTPUT, tailTruncate } from "./util";
 
 const DEFAULT_TIMEOUT = 120; // seconds
@@ -28,7 +28,7 @@ const capStream = async (
 
 export const bash = tool({
   description:
-    "Run a bash command on your computer (working dir = your data dir). Returns stdout, stderr, exitCode; a non-zero exit is returned, not thrown. " +
+    "Run a bash command on your computer (working dir = your home; your memory lives in ./memory). Returns stdout, stderr, exitCode; a non-zero exit is returned, not thrown. " +
     `Output keeps the last ~${MAX_OUTPUT / 1000}k chars per stream; anything longer is saved to a temp file whose path is included. ` +
     `Default timeout ${DEFAULT_TIMEOUT}s (max ${MAX_TIMEOUT}s).`,
   inputSchema: z.object({
@@ -41,7 +41,7 @@ export const bash = tool({
   execute: async ({ command, timeout }) => {
     const secs = Math.min(timeout ?? DEFAULT_TIMEOUT, MAX_TIMEOUT);
     const r = await execa("bash", ["-lc", command], {
-      cwd: DATA_DIR,
+      cwd: WORKSPACE_DIR,
       timeout: secs * 1000,
       reject: false,
       maxBuffer: 50_000_000,

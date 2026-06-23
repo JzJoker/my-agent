@@ -5,7 +5,7 @@ import { createAgent } from "./agent";
 import { cli } from "./channels/cli";
 import { telegram } from "./channels/telegram";
 import type { Channel } from "./channels/types";
-import { conversationsDir, memoryDir, remindersDir } from "./config";
+import { conversationsDir, notesDir, remindersDir, WORKSPACE_DIR } from "./config";
 
 Laminar.initialize({
   projectApiKey: process.env.LMNR_PROJECT_API_KEY,
@@ -16,8 +16,9 @@ Laminar.initialize({
   }),
 });
 
+await mkdir(WORKSPACE_DIR, { recursive: true });
 await mkdir(conversationsDir, { recursive: true });
-await mkdir(memoryDir, { recursive: true });
+await mkdir(notesDir, { recursive: true });
 await mkdir(remindersDir, { recursive: true });
 
 const {

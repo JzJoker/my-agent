@@ -1,21 +1,21 @@
 import { readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { DATA_DIR } from "./config";
+import { MEMORY_DIR } from "./config";
 
 const AGENTS = readFileSync(
   join(import.meta.dirname, "AGENTS.md"),
   "utf8",
 ).trim();
 
-const memoryFile = join(DATA_DIR, "MEMORY.md");
+const memoryFile = join(MEMORY_DIR, "MEMORY.md");
 
 const readMemory = async (): Promise<string> => {
   try {
     const content = (await readFile(memoryFile, "utf8")).trim();
     if (!content) return "";
     return `\n## MEMORY.md — your always-loaded memory
-The contents of MEMORY.md (root of your data dir), injected here automatically every turn. Keep it current: store durable facts about the user and yourself here so you always have them without searching.
+The contents of memory/MEMORY.md, injected here automatically every turn. Keep it current: store durable facts about the user and yourself here so you always have them without searching.
 
 ${content}\n`;
   } catch {
