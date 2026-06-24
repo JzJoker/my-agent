@@ -1,63 +1,67 @@
 # my-agent
 
-A minimal but capable **personal-assistant Telegram bot** — the whole agent is one
-file (`bot.ts`, ~200 lines) built on the [Vercel AI SDK](https://sdk.vercel.ai).
+A minimal personal-assistant Telegram bot named **Sam**, built on the
+[Vercel AI SDK](https://sdk.vercel.ai). Single-user, runs as a long-poll worker.
 
-- **Inference** — any model via the **Vercel AI Gateway** (one API key for chat *and*
-  the memory layer; no per-provider keys).
-- **Long-term memory** — self-hosted **[Mem0](https://github.com/mem0ai/mem0)**:
-  it extracts and recalls facts about the user across turns. Vectors persist in
-  **Qdrant** when `QDRANT_URL` is set; otherwise a local store for dev.
-- **Tools** — **Tavily** web search, **Gmail + Google Calendar** via
-  [Composio](https://composio.dev) (read / draft / create only — it never sends or
-  deletes), and a tiny **SQLite-backed scheduler** for reminders & recurring tasks.
-- **Tracing** — **[Laminar](https://lmnr.ai)** (OpenTelemetry) on every LLM call.
+- **Inference** — `moonshotai/kimi-k2` via the **Vercel AI Gateway** (one API key for everything).
+- **Memory** — a plain directory on disk (`memory/`). `MEMORY.md` is the hot tier, auto-injected
+  into the system prompt every turn; `memory/notes/` is the cold tier the agent greps on demand.
+  The agent maintains both itself with its file tools. No database.
+- **Tools** — `bash` (a real shell rooted at the workspace), `readFile`/`writeFile`,
+  **Tavily** web search, and **Gmail + Calendar + Sheets** via
+  [Composio](https://composio.dev) (curated read / draft / create only — never sends or deletes).
+- **Reminders** — one YAML file per reminder in `memory/reminders/`, scheduled with
+  [croner](https://github.com/hexagon/croner). Rebuilt from disk on boot and after every turn.
+- **Tracing** — **[Laminar](https://lmnr.ai)** on every LLM call.
 
 ## Quick start
 
 ```bash
-corepack enable                 # ensures pnpm 10 (pinned in package.json)
+corepack enable                 # pnpm 10 (pinned in package.json)
 pnpm install
-cp .env.example .env            # then fill in keys — see the table below
+cp .env.example .env            # fill in keys — see the table below
 pnpm try                        # CLI REPL: type messages, "exit" to quit
 ```
 
-`pnpm try` runs the full agent locally in a terminal REPL — the fastest way to poke
-at it. To run the actual Telegram bot (long-polling):
+`pnpm try` runs the full agent in a terminal REPL against a local `./workspace` — the fastest
+way to poke at it. To run the actual Telegram bot (long-polling):
 
 ```bash
-pnpm dev                        # needs TELEGRAM_TOKEN
+pnpm dev                        # needs TELEGRAM_TOKEN + TELEGRAM_CHAT_ID
 ```
 
-**Requirements:** Node 20+ and pnpm 10 (via `corepack enable`).
+**Requirements:** Node 24 (`.node-version`) and pnpm 10 (`corepack enable`).
 
 ## Environment variables
 
-Copy `.env.example` to `.env` and fill these in:
+Copy `.env.example` to `.env` and fill these in. Leave a feature's keys unset and that feature is
+simply skipped, so you can start with just `AI_GATEWAY_API_KEY` (+ `TELEGRAM_*` for the bot).
 
 | Var | Required? | What it's for |
 |---|---|---|
-| `AI_GATEWAY_API_KEY` | **yes** | All inference — chat + Mem0's extraction/embeddings. From [Vercel AI Gateway](https://vercel.com/docs/ai-gateway). |
-| `LMNR_PROJECT_API_KEY` | **yes** | Laminar tracing. Free project key from [lmnr.ai](https://lmnr.ai). |
-| `TELEGRAM_TOKEN` | for Telegram | Bot token from [@BotFather](https://t.me/BotFather). Not needed for `pnpm try`. |
+| `AI_GATEWAY_API_KEY` | **yes** | All inference, via [Vercel AI Gateway](https://vercel.com/docs/ai-gateway). |
+| `TELEGRAM_TOKEN` | for Telegram | Bot token from [@BotFather](https://t.me/BotFather). |
+| `TELEGRAM_CHAT_ID` | for Telegram | Your chat id — the single-user gate. From [@userinfobot](https://t.me/userinfobot). |
+| `WORKSPACE_ROOT` | no | The agent's bash cwd + file-tool root. Default `./workspace`. |
+| `MEMORY_ROOT` | no | The memory dir, relative to `WORKSPACE_ROOT`. Default `memory`. |
 | `TAVILY_API_KEY` | for web search | From [tavily.com](https://tavily.com). |
-| `COMPOSIO_API_KEY` + `COMPOSIO_USER_ID` | for Gmail/Calendar | Both must be set; the Google account is connected under that Composio user. |
-| `QDRANT_URL` | prod only | Persistent memory vectors. Unset locally → in-process store. |
-
-The bot degrades gracefully: leave a feature's keys unset and that feature is simply
-skipped, so you can start with just `AI_GATEWAY_API_KEY` + `LMNR_PROJECT_API_KEY`.
+| `COMPOSIO_API_KEY` + `COMPOSIO_USER_ID` | for Gmail/Cal/Sheets | Both must be set; the Google account is connected under that Composio user. |
+| `LMNR_PROJECT_API_KEY` | for tracing | Laminar project key from [lmnr.ai](https://lmnr.ai). |
+| `LMNR_BASE_URL` / `LMNR_HTTP_PORT` / `LMNR_GRPC_PORT` | self-hosted Laminar | Point tracing at your own instance. |
 
 ## How it works
 
 ```
-Telegram ──► bot.ts (grammY long-poll) ──► generateText (Vercel AI SDK, via AI Gateway)
-                 │                            tools: tavily_search, schedule_task, Gmail, Calendar
-                 ├─ before each turn:  memory.search()  → inject recalled facts into the system prompt
-                 └─ after each turn:   memory.add()     → Mem0 extracts & stores new facts
+Telegram / CLI ──► channel ──► agent.runTurn ──► generateText (Vercel AI SDK, via AI Gateway)
+                                   │               tools: bash, readFile, writeFile,
+                                   │                      web_search, web_extract, Composio
+                                   ├─ workspace = WORKSPACE_ROOT (bash cwd + file root)
+                                   ├─ memory    = WORKSPACE_ROOT/memory (notes, conversations, reminders)
+                                   └─ reminders = YAML in memory/reminders, scheduled by croner
 ```
 
-Scheduled tasks live in a small SQLite table; a 60-second sweep ticker fires due rows
-and delivers the result back to the chat.
+Turns are mutex-serialized so a turn and a firing reminder never overlap. Conversation history is
+logged as per-day JSON files under `memory/conversations`; the model sees the most recent 25 messages.
 
 ## Scripts
 
@@ -69,10 +73,24 @@ and delivers the result back to the chat.
 
 ## Deploying
 
-Runs on a self-hosted Linux host as a rootless **systemd** user service (long-polls
-Telegram, no public port). See [`DEPLOY.md`](./DEPLOY.md) for the deploy workflow and
-[`CLAUDE.md`](./CLAUDE.md) for restart/debugging docs (logs, traces, Composio connections).
+Runs on a self-hosted Linux host as a rootless **systemd** user service (long-polls Telegram, no
+public port). GitHub `main` is the source of truth; the host converges to it on every deploy.
+`.env` and the workspace live only on the host (gitignored) and are never touched by a deploy.
 
-## More
+The host is referenced only by an SSH alias (default `homelab`) defined in your local
+`~/.ssh/config` — nothing hardware-specific is committed.
 
-[`CLAUDE.md`](./CLAUDE.md) has the architecture deep-dive, key gotchas, and ops runbook.
+```bash
+git push                  # ship changes to origin/main
+./scripts/deploy.sh       # SSH in, git reset --hard, pnpm install, restart the service
+```
+
+One-time host setup is `scripts/bootstrap-remote.sh` (installs the user unit, enables linger so it
+runs at boot). Ops on the host:
+
+```bash
+systemctl --user status my-agent
+journalctl --user -u my-agent -f       # live logs
+```
+
+See [`CLAUDE.md`](./CLAUDE.md) for the architecture deep-dive, key gotchas, and the full ops runbook.
