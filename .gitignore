@@ -7,3 +7,9 @@ memory/
 data/
 .claude/
 .lmnr
+
+# Docker is managed in the homelab repo (homelab/my-agent/), not in this fork.
+Dockerfile
+docker-compose.y*ml
+.dockerignore
+*.dockerignore
