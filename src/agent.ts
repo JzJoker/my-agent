@@ -94,12 +94,22 @@ export const createAgent: CreateAgent = (deliver, sendFile) => {
       const actions: unknown[] = [];
       const open_maps = tool({
         description:
-          "Open turn-by-turn navigation to a place on the user's phone. Use for any directions/navigation request.",
+          "Open driving directions on the user's phone. Use for any directions/navigation request.",
         inputSchema: z.object({
-          destination: z.string().describe("Address or place name"),
+          destination: z
+            .string()
+            .describe(
+              "Where to navigate to — a specific place or full address; include the city when you can " +
+                "(e.g. 'Ferry Building, San Francisco'), so the map resolves it correctly.",
+            ),
         }),
         execute: async ({ destination }) => {
-          actions.push({ type: "open_maps", destination });
+          // Build a ready-to-open Google Maps directions link so the client just opens `url`.
+          const url =
+            "https://www.google.com/maps/dir/?api=1&destination=" +
+            encodeURIComponent(destination) +
+            "&travelmode=driving";
+          actions.push({ type: "open_maps", destination, url });
           return { ok: true };
         },
       });
