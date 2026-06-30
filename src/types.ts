@@ -4,6 +4,7 @@ import type { SendFile } from "./tools";
 export type Agent = {
   runTurn: (message: string) => Promise<void>;
   syncReminders: () => Promise<void>;
+  ask: (text: string) => Promise<{ speak: string; actions: unknown[] }>;
 };
 export type Deliver = (stream: AsyncIterable<string>) => Promise<void>;
 export type CreateAgent = (deliver: Deliver, sendFile: SendFile) => Agent;
@@ -19,5 +20,5 @@ export type Reminder = z.infer<typeof reminderSchema>;
 
 export interface Channel {
   name: string;
-  start(createAgent: CreateAgent): Promise<void>;
+  start(createAgent: CreateAgent): Promise<Agent | void>;
 }

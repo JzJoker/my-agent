@@ -25,7 +25,7 @@ export const telegram: Channel = {
     const streamer = streamApi(bot.api.raw);
     const newDraftId = () => randomInt(1, 2 ** 48);
     const IMAGE_EXT = ["png", "jpg", "jpeg", "gif", "webp"];
-    const { runTurn, syncReminders } = createAgent(
+    const agent = createAgent(
       (stream) =>
         streamer.streamMarkdown(chatId, newDraftId(), stream).then(() => {}),
       (absPath, caption) => {
@@ -41,9 +41,9 @@ export const telegram: Channel = {
     bot.on("message:text", async (ctx) => {
       if (ctx.chat.id !== chatId) return; // ignore non-owner messages
       ctx.chatAction = "typing"; // auto-refreshed until the handler returns
-      await runTurn(ctx.message.text);
+      await agent.runTurn(ctx.message.text);
     });
-    await syncReminders();
+    await agent.syncReminders();
     const shutdown = async () => {
       await bot.stop();
       await Laminar.shutdown();
@@ -52,5 +52,6 @@ export const telegram: Channel = {
     process.once("SIGINT", shutdown);
     process.once("SIGTERM", shutdown);
     bot.start();
+    return agent;
   },
 };

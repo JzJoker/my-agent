@@ -2,6 +2,7 @@ import { Laminar, registerAiSdkTelemetry } from "@lmnr-ai/lmnr";
 import { mkdir } from "node:fs/promises";
 import { parseArgs } from "node:util";
 import { createAgent } from "./agent";
+import { startAskServer } from "./channels/ask";
 import { cli } from "./channels/cli";
 import { telegram } from "./channels/telegram";
 import { conversationsDir, remindersDir, WORKSPACE_ROOT } from "./config";
@@ -25,8 +26,15 @@ await mkdir(remindersDir, { recursive: true });
 const { values } = parseArgs({ options: { mode: { type: "string" } } });
 const mode = values.mode;
 
-if (mode === telegram.name) telegram.start(createAgent);
-else if (mode === cli.name) cli.start(createAgent);
+if (mode === telegram.name) {
+  const agent = await telegram.start(createAgent);
+  // Voice front-end: shares the same agent (memory, mutex, reminders).
+  if (agent && process.env.ASK_TOKEN)
+    startAskServer(agent, {
+      token: process.env.ASK_TOKEN,
+      port: Number(process.env.ASK_PORT ?? 8788),
+    });
+} else if (mode === cli.name) cli.start(createAgent);
 else {
   console.error(`Specify --mode ${telegram.name} or ${cli.name}`);
   process.exit(1);
