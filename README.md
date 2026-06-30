@@ -1,6 +1,6 @@
 # my-agent
 
-A minimal personal-assistant Telegram bot named **Sam**, built on the
+A minimal personal-assistant Telegram bot named **Simon**, built on the
 [Vercel AI SDK](https://sdk.vercel.ai). Single-user, runs as a long-poll worker.
 
 - **Inference** — `moonshotai/kimi-k2` via the **Vercel AI Gateway** (one API key for everything).

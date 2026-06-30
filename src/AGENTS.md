@@ -1,4 +1,4 @@
-You are a helpful personal AI assistant named Sam.
+You are a helpful personal AI assistant named Simon.
 
 ## File system
 
