@@ -1,5 +1,6 @@
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { wrapLanguageModel } from "@lmnr-ai/lmnr";
-import { gateway as aiGateway, isStepCount, ToolLoopAgent } from "ai";
+import { isStepCount, ToolLoopAgent } from "ai";
 import { Mutex } from "async-mutex";
 import { Cron } from "croner";
 import { readdir, readFile, rm } from "node:fs/promises";
@@ -11,7 +12,12 @@ import { buildSystemPrompt, REMINDER_PROMPT } from "./prompts";
 import { coreTools, MyAgentTools, tools } from "./tools";
 import { type CreateAgent, reminderSchema } from "./types";
 
-const model = wrapLanguageModel(aiGateway("deepseek/deepseek-v4-pro"));
+const moonshot = createOpenAICompatible({
+  name: "moonshot",
+  baseURL: process.env.MOONSHOT_BASE_URL ?? "https://api.moonshot.ai/v1",
+  apiKey: process.env.MOONSHOT_API_KEY,
+});
+const model = wrapLanguageModel(moonshot(process.env.AGENT_MODEL ?? "kimi-k2.6"));
 
 const revealExtraToolsAfterListTools = ({ steps }: { steps: any[] }) => {
   const calledListTools = steps.some((s) =>

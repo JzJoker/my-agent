@@ -9,6 +9,7 @@
     "try": "tsx --env-file=.env src/index.ts --mode cli"
   },
   "dependencies": {
+    "@ai-sdk/openai-compatible": "^3.0.2",
     "@composio/core": "^0.10.0",
     "@composio/vercel": "^0.9.2",
     "@grammyjs/auto-chat-action": "^0.1.1",
