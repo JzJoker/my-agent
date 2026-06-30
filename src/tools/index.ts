@@ -5,6 +5,7 @@ import { WORKSPACE_ROOT } from "../config";
 import { bash } from "./bash";
 import { getComposioTools } from "./composio";
 import { readFile, writeFile } from "./files";
+import { check_print } from "./printer";
 import { web_extract, web_search } from "./web";
 
 export type MyAgentTools = ToolSet & {
@@ -22,6 +23,7 @@ export const coreTools: MyAgentTools = {
   writeFile,
   web_search,
   web_extract,
+  check_print,
   send_file: tool({
     description:
       "Send a file from your workspace to the user in the chat — a chart/image (PNG, JPG), a CSV, a PDF, etc. Path is relative to your home directory; optional short caption.",

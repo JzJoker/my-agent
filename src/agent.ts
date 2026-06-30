@@ -44,7 +44,7 @@ export const createAgent: CreateAgent = (deliver, sendFile) => {
           prepareStep: revealExtraToolsAfterListTools,
           stopWhen: isStepCount(100),
           instructions: await buildSystemPrompt(),
-          toolsContext: { send_file: { sendFile } },
+          toolsContext: { send_file: { sendFile }, check_print: { sendFile } },
         });
         const result = await agent.stream({
           messages: await getConversationHistoryWindow(),
